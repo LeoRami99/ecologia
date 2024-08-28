@@ -159,16 +159,16 @@ export default function Home() {
   return (
     <div className="min-h-screen  flex flex-col items-center justify-center p-4">
       <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[600px]">
-        <h1 className="text-2xl font-bold text-center mb-4 text-white">EcologIA</h1>
+        <h1 className="text-2xl font-bold text-center mb-4 text-white">EcoIA</h1>
         <div className="space-y-4 overflow-y-auto rounded-lg p-4 bg-white-50/30 mb-4 h-[460px]">
           {conversation.length === 0 && (
             <div className='text-center'>
-              <Image alt="EcologIA" src="/ecologIAnoBg.webp" width={300} height={300} className="mx-auto rounded">
+              <Image alt="EcoIA" src="/ecologIAnoBg.webp" width={300} height={300} className="mx-auto rounded">
 
               </Image>
               <div className="text-center text-white font-extrabold text-5xl mb-4 leading-tight">
                 <span className="block animate-pulse">Comienza a hablar con</span>
-                <span className="text-green-400 text-6xl">EcologIA</span>
+                <span className="text-green-400 text-6xl">EcoIA</span>
               </div>
 
 
@@ -186,7 +186,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="chat-header text-white">
-                {message.role === 'user' ? 'Tú' : 'EcologIA'}
+                {message.role === 'user' ? 'Tú' : 'EcoIA'}
               </div>
               <div className={`chat-bubble backdrop-blur ${message.role === 'user' ? 'bg-green-950/50 text-white' : 'bg-green-500/50 text-white'}`}>
                 {message.content}
