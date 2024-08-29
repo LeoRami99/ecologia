@@ -70,11 +70,14 @@ export default function Home() {
 
   // Función para leer en voz alta y detener TTS si es necesario
   const speakMessage = (text: string) => {
+    // Eliminar todos los asteriscos del texto
+    const sanitizedText = text.replace(/\*/g, '');
+
     if (femaleVoice) {
       // Cancelar cualquier reproducción TTS activa antes de empezar
       window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(sanitizedText);
       utterance.voice = femaleVoice;
       utterance.pitch = 1;  // Ajusta el tono de voz
       utterance.rate = 1;   // Ajusta la velocidad
@@ -167,6 +170,14 @@ export default function Home() {
     }
   }, [conversation, femaleVoice]);
 
+  // Cambiar estado cuando se detiene el TTS o el reconocimiento de voz
+  useEffect(() => {
+    if (!isSpeaking && recognitionInstance) {
+      recognitionInstance.stop();
+      setIsListening(false);
+    }
+  }, [isSpeaking]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[600px]">
@@ -198,7 +209,6 @@ export default function Home() {
             <div className="bar"></div>
           </div>
         </div>
-
 
         <div className="space-y-4 overflow-y-auto rounded-lg p-4 bg-white-50/30 mb-4 h-[260px]">
           {conversation.length === 0 && (
@@ -263,4 +273,3 @@ export default function Home() {
     </div >
   );
 }
-
