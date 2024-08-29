@@ -52,6 +52,7 @@ export default function Home() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [femaleVoice, setFemaleVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [recognitionInstance, setRecognitionInstance] = useState<SpeechRecognition | null>(null);
 
   // Cargar voces y seleccionar una voz femenina
@@ -78,6 +79,15 @@ export default function Home() {
       utterance.pitch = 1;  // Ajusta el tono de voz
       utterance.rate = 1;   // Ajusta la velocidad
       utterance.volume = 1; // Ajusta el volumen
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
       window.speechSynthesis.speak(utterance);
     } else {
       console.warn('No se ha encontrado una voz femenina.');
@@ -117,8 +127,8 @@ export default function Home() {
         }
       };
 
-      recognition.onerror = (event: Error) => {
-        console.error('Speech recognition error:', event.message);
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
       recognition.onend = () => {
@@ -144,6 +154,7 @@ export default function Home() {
 
     // Detener cualquier voz activa de Text-to-Speech
     window.speechSynthesis.cancel();
+    setIsSpeaking(false);
   };
 
   // Efecto para leer el último mensaje generado
@@ -157,21 +168,45 @@ export default function Home() {
   }, [conversation, femaleVoice]);
 
   return (
-    <div className="min-h-screen  flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[600px]">
         <h1 className="text-2xl font-bold text-center mb-4 text-white">EcoIA</h1>
-        <div className="space-y-4 overflow-y-auto rounded-lg p-4 bg-white-50/30 mb-4 h-[460px]">
+        <div className="image-container relative flex justify-center items-center w-52 h-52 mx-auto">
+          {/* Mostrar la imagen solo cuando no esté hablando */}
+          <Image
+            alt="EcoIA"
+            src="/ecologIAnoBg.webp"
+            width={200}
+            height={200}
+            className={`absolute transition-opacity duration-500 ease-in-out ${isSpeaking ? 'opacity-0' : 'opacity-100'}`}
+          />
+
+          {/* Mostrar la animación solo cuando esté hablando */}
+          <div
+            className={`wave-animation absolute transition-opacity duration-500 ease-in-out flex justify-center items-center ${isSpeaking ? 'opacity-100' : 'opacity-0'
+              }`}
+          >
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+          </div>
+        </div>
+
+
+        <div className="space-y-4 overflow-y-auto rounded-lg p-4 bg-white-50/30 mb-4 h-[260px]">
           {conversation.length === 0 && (
             <div className='text-center'>
-              <Image alt="EcoIA" src="/ecologIAnoBg.webp" width={300} height={300} className="mx-auto rounded">
-
-              </Image>
               <div className="text-center text-white font-extrabold text-5xl mb-4 leading-tight">
                 <span className="block animate-pulse">Comienza a hablar con</span>
                 <span className="text-green-400 text-6xl">EcoIA</span>
               </div>
-
-
             </div>
           )}
 
@@ -205,7 +240,6 @@ export default function Home() {
         />
 
         <div className="flex space-x-4 items-center justify-center">
-          {/* Botón de iniciar o detener el reconocimiento de voz */}
           {!isListening ? (
             <button
               onClick={startListening}
@@ -229,3 +263,4 @@ export default function Home() {
     </div >
   );
 }
+
