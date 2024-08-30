@@ -6,7 +6,6 @@ import { FaMicrophone, FaMicrophoneAltSlash } from "react-icons/fa";
 import Image from "next/image";
 import Speech from 'react-text-to-speech';
 
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 interface SpeechRecognition extends EventTarget {
@@ -53,16 +52,15 @@ export default function Home() {
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [recognitionInstance, setRecognitionInstance] = useState<SpeechRecognition | null>(null);
-  const playButtonRef = useRef<HTMLButtonElement>(null); // Ref para el botón de reproducción
+  const playButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Función de reconocimiento de voz (Speech-to-Text) continua
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.lang = 'es-ES'; // Ajusta el idioma
-      recognition.continuous = true; // Permite escucha continua
-      recognition.interimResults = false; // Desactiva los resultados interinos (solo los finales)
+      recognition.lang = 'es-ES';
+      recognition.continuous = true;
+      recognition.interimResults = false;
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -72,16 +70,7 @@ export default function Home() {
       recognition.onresult = async (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript.trim();
         if (transcript) {
-          setInput(transcript); // Asigna el texto reconocido al input
-
-          // Envía el mensaje cuando se completa una frase
-          const { messages } = await continueConversation([
-            ...conversation,
-            { role: 'user', content: transcript },
-          ]);
-
-          setConversation(messages);
-          setInput(''); // Limpiar el input después de enviar
+          setInput(transcript);
         }
       };
 
@@ -89,47 +78,62 @@ export default function Home() {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
-      recognition.onend = () => {
+
+      recognition.onend = async () => {
         if (isListening) {
-          recognition.start(); // Reanudar la escucha si no se ha detenido
+          setIsListening(false);
+          // Si hay texto reconocido, envíalo como mensaje
+          if (input) {
+            const { messages } = await continueConversation([
+              ...conversation,
+              { role: 'user', content: input },
+            ]);
+            setConversation(messages);
+            setInput(''); // Limpia el input después de enviar
+          }
         }
       };
 
       recognition.start();
-      setRecognitionInstance(recognition); // Guardar la instancia del reconocimiento
+      setRecognitionInstance(recognition);
     } else {
       console.warn('Speech Recognition API no es compatible con este navegador.');
     }
   };
 
-  // Función para detener Speech-to-Text
-  const stopSpeech = () => {
+  const stopSpeech = async () => {
     if (recognitionInstance) {
       recognitionInstance.stop();
       setIsListening(false);
     }
+    // Envía el mensaje si se ha capturado algo
+    if (input) {
+      const { messages } = await continueConversation([
+        ...conversation,
+        { role: 'user', content: input },
+      ]);
+      setConversation(messages);
+      setInput(''); // Limpia el input después de enviar
+    }
   };
 
-  // Efecto para manejar la lectura del último mensaje generado
   useEffect(() => {
     if (conversation.length > 0) {
       const lastMessage = conversation[conversation.length - 1];
       if (lastMessage.role !== 'user') {
         setIsSpeaking(true);
-        // Hacer clic en el botón de reproducción automáticamente
         setTimeout(() => {
           playButtonRef.current?.click();
-        }, 2000);
+        }, 1000);
       }
     }
   }, [conversation]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[600px]">
+      <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[auto]">
         <h1 className="text-2xl font-bold text-center mb-4 text-white">EcoIA</h1>
         <div className="image-container relative flex justify-center items-center w-52 h-52 mx-auto">
-          {/* Mostrar la imagen solo cuando no esté hablando */}
           <Image
             alt="EcoIA"
             src="/ecologIAnoBg.webp"
@@ -137,8 +141,6 @@ export default function Home() {
             height={200}
             className={`absolute transition-opacity duration-500 ease-in-out ${isSpeaking ? 'opacity-0' : 'opacity-100'}`}
           />
-
-          {/* Mostrar la animación solo cuando esté hablando */}
           <div
             className={`wave-animation absolute transition-opacity duration-500 ease-in-out flex justify-center items-center ${isSpeaking ? 'opacity-100' : 'opacity-0'}`}
           >
@@ -182,16 +184,15 @@ export default function Home() {
                 {message.content}
               </div>
 
-              {/* TTS para el mensaje del bot */}
               {message.role !== 'user' && (
                 <Speech
-                  text={message.content.replace(/\*/g, '')}  // Eliminar los asteriscos del texto
+                  text={message.content.replace(/\*/g, '')}
                   lang="es-ES"
                   onStart={() => setIsSpeaking(true)}
                   onStop={() => setIsSpeaking(false)}
                   startBtn={
                     <button
-                      ref={playButtonRef} // Ref al botón para hacer clic automáticamente
+                      ref={playButtonRef}
                       className="absolute top-0 right-0 p-2 text-white bg-green-500 hover:bg-green-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
                     >
                       Reproducir
@@ -203,13 +204,17 @@ export default function Home() {
           ))}
         </div>
 
-        <input
-          type="text"
+        <textarea
+          rows={1}
+          cols={50}
           value={input}
           onChange={event => setInput(event.target.value)}
-          className="w-full p-2 border rounded-lg mb-4 hidden"
-          placeholder="Escribe un mensaje..."
-        />
+          className="w-full p-2 border rounded-lg disabled:opacity-50"
+          placeholder="Esperando tu mensaje..."
+          disabled={!isListening}
+        >
+
+        </textarea>
 
         <div className="flex space-x-4 items-center justify-center">
           {!isListening ? (
@@ -219,7 +224,6 @@ export default function Home() {
             >
               <FaMicrophone className="w-8 h-8" />
             </button>
-
           ) : (
             <button
               onClick={stopSpeech}
@@ -229,7 +233,6 @@ export default function Home() {
             </button>
           )}
         </div>
-
       </div>
     </div>
   );
