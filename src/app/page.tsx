@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Message, continueConversation } from './actions';
 import { FaMicrophone, FaMicrophoneAltSlash } from "react-icons/fa";
 import Image from "next/image";
+import Speech from 'react-text-to-speech';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -49,53 +50,10 @@ interface SpeechRecognitionErrorEvent extends Error {
 export default function Home() {
   const [conversation, setConversation] = useState<Message[]>([]);
   const [input, setInput] = useState<string>('');
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [femaleVoice, setFemaleVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [recognitionInstance, setRecognitionInstance] = useState<SpeechRecognition | null>(null);
-
-  // Cargar voces y seleccionar una voz femenina
-  useEffect(() => {
-    const loadVoices = () => {
-      const synthVoices = window.speechSynthesis.getVoices();
-      setVoices(synthVoices);
-      const selectedVoice = synthVoices.find(voice => voice.name.includes('Female'));
-      setFemaleVoice(selectedVoice || synthVoices[0]); // Si no encuentra una voz femenina, usa la primera disponible
-    };
-
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
-  }, []);
-
-  // Función para leer en voz alta y detener TTS si es necesario
-  const speakMessage = (text: string) => {
-    // Eliminar todos los asteriscos del texto
-    const sanitizedText = text.replace(/\*/g, '');
-
-    if (femaleVoice) {
-      // Cancelar cualquier reproducción TTS activa antes de empezar
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(sanitizedText);
-      utterance.voice = femaleVoice;
-      utterance.pitch = 1;  // Ajusta el tono de voz
-      utterance.rate = 1;   // Ajusta la velocidad
-      utterance.volume = 1; // Ajusta el volumen
-
-      utterance.onstart = () => {
-        setIsSpeaking(true);
-      };
-
-      utterance.onend = () => {
-        setIsSpeaking(false);
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } else {
-      console.warn('No se ha encontrado una voz femenina.');
-    }
-  };
+  const playButtonRef = useRef<HTMLButtonElement>(null); // Ref para el botón de reproducción
 
   // Función de reconocimiento de voz (Speech-to-Text) continua
   const startListening = () => {
@@ -115,9 +73,6 @@ export default function Home() {
         const transcript = event.results[0][0].transcript.trim();
         if (transcript) {
           setInput(transcript); // Asigna el texto reconocido al input
-
-          // Detener cualquier voz activa y luego enviar el mensaje
-          window.speechSynthesis.cancel();
 
           // Envía el mensaje cuando se completa una frase
           const { messages } = await continueConversation([
@@ -147,36 +102,27 @@ export default function Home() {
     }
   };
 
-  // Función para detener Speech-to-Text y Text-to-Speech
+  // Función para detener Speech-to-Text
   const stopSpeech = () => {
-    // Detener el reconocimiento de voz
     if (recognitionInstance) {
       recognitionInstance.stop();
       setIsListening(false);
     }
-
-    // Detener cualquier voz activa de Text-to-Speech
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
   };
 
-  // Efecto para leer el último mensaje generado
+  // Efecto para manejar la lectura del último mensaje generado
   useEffect(() => {
     if (conversation.length > 0) {
       const lastMessage = conversation[conversation.length - 1];
-      if (lastMessage.role !== 'user') { // Evitar que lea los mensajes del usuario
-        speakMessage(lastMessage.content);
+      if (lastMessage.role !== 'user') {
+        setIsSpeaking(true);
+        // Hacer clic en el botón de reproducción automáticamente
+        setTimeout(() => {
+          playButtonRef.current?.click();
+        }, 2000);
       }
     }
-  }, [conversation, femaleVoice]);
-
-  // Cambiar estado cuando se detiene el TTS o el reconocimiento de voz
-  useEffect(() => {
-    if (!isSpeaking && recognitionInstance) {
-      recognitionInstance.stop();
-      setIsListening(false);
-    }
-  }, [isSpeaking]);
+  }, [conversation]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -194,8 +140,7 @@ export default function Home() {
 
           {/* Mostrar la animación solo cuando esté hablando */}
           <div
-            className={`wave-animation absolute transition-opacity duration-500 ease-in-out flex justify-center items-center ${isSpeaking ? 'opacity-100' : 'opacity-0'
-              }`}
+            className={`wave-animation absolute transition-opacity duration-500 ease-in-out flex justify-center items-center ${isSpeaking ? 'opacity-100' : 'opacity-0'}`}
           >
             <div className="bar"></div>
             <div className="bar"></div>
@@ -236,9 +181,26 @@ export default function Home() {
               <div className={`chat-bubble backdrop-blur ${message.role === 'user' ? 'bg-green-950/50 text-white' : 'bg-green-500/50 text-white'}`}>
                 {message.content}
               </div>
+
+              {/* TTS para el mensaje del bot */}
+              {message.role !== 'user' && (
+                <Speech
+                  text={message.content.replace(/\*/g, '')}  // Eliminar los asteriscos del texto
+                  lang="es-ES"
+                  onStart={() => setIsSpeaking(true)}
+                  onStop={() => setIsSpeaking(false)}
+                  startBtn={
+                    <button
+                      ref={playButtonRef} // Ref al botón para hacer clic automáticamente
+                      className="absolute top-0 right-0 p-2 text-white bg-green-500 hover:bg-green-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
+                    >
+                      Reproducir
+                    </button>
+                  }
+                />
+              )}
             </div>
           ))}
-
         </div>
 
         <input
@@ -265,11 +227,10 @@ export default function Home() {
             >
               <FaMicrophoneAltSlash className="w-8 h-8" />
             </button>
-
           )}
         </div>
 
       </div>
-    </div >
+    </div>
   );
 }
