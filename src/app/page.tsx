@@ -6,7 +6,7 @@ import { FaMicrophone, FaMicrophoneAltSlash } from "react-icons/fa";
 import Image from "next/image";
 import Speech from 'react-text-to-speech';
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 interface SpeechRecognition extends EventTarget {
   lang: string;
