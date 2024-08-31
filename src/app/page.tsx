@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Message, continueConversation } from './actions';
 import { FaMicrophone, FaMicrophoneAltSlash } from "react-icons/fa";
+import { FaHome, FaUser, FaClipboardList, FaRegCalendarAlt, FaEnvelope } from 'react-icons/fa';
 import Image from "next/image";
 import Speech from 'react-text-to-speech';
+import Navbar from './components/navbar';
 
 export const maxDuration = 60;
 
@@ -130,110 +132,154 @@ export default function Home() {
   }, [conversation]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[auto]">
-        <h1 className="text-2xl font-bold text-center mb-4 text-white">EcoIA</h1>
-        <div className="image-container relative flex justify-center items-center w-52 h-52 mx-auto">
-          <Image
-            alt="EcoIA"
-            src="/ecologIAnoBg.webp"
-            width={200}
-            height={200}
-            className={`absolute transition-opacity duration-500 ease-in-out ${isSpeaking ? 'opacity-0' : 'opacity-100'}`}
-          />
-          <div
-            className={`wave-animation absolute transition-opacity duration-500 ease-in-out flex justify-center items-center ${isSpeaking ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-            <div className="bar"></div>
-          </div>
-        </div>
 
-        <div className="space-y-4 overflow-y-auto rounded-lg p-4 bg-white-50/30 mb-4 h-[260px]">
-          {conversation.length === 0 && (
-            <div className='text-center'>
-              <div className="text-center text-white font-extrabold text-5xl mb-4 leading-tight">
-                <span className="block animate-pulse">Comienza a hablar con</span>
-                <span className="text-green-400 text-6xl">EcoIA</span>
+    <div className="drawer">
+      <input id="my-drawer" type="checkbox" className="drawer-toggle" />
+      <div className="drawer-content">
+        <Navbar />
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+          <div className="backdrop-blur bg-black/20 p-6 rounded-lg shadow-lg w-full max-w-2xl h-[auto]">
+            <h1 className="text-2xl font-bold text-center mb-4 text-white">EcoIA</h1>
+            <div className="image-container relative flex justify-center items-center w-52 h-52 mx-auto">
+              <Image
+                alt="EcoIA"
+                src="/ecologIAnoBg.webp"
+                width={200}
+                height={200}
+                className={`absolute transition-opacity duration-500 ease-in-out ${isSpeaking ? 'opacity-0' : 'opacity-100'}`}
+              />
+              <div
+                className={`wave-animation absolute transition-opacity duration-500 ease-in-out flex justify-center items-center ${isSpeaking ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
+                <div className="bar"></div>
               </div>
             </div>
-          )}
 
-          {conversation.map((message, index) => (
-            <div key={index} className={`chat ${message.role === 'user' ? 'chat-end' : 'chat-start'}`}>
-              <div className="chat-image avatar">
-                <div className="w-10 rounded-full">
-                  <img
-                    alt="Chat Avatar"
-                    src={message.role === 'user' ? 'https://img.icons8.com/fluency/96/user-male-circle--v1.png' : '/ecologIAnoBg.webp'}
-                  />
+            <div className="space-y-4 overflow-y-auto rounded-lg p-4 bg-white-50/30 mb-4 h-[260px]">
+              {conversation.length === 0 && (
+                <div className='text-center'>
+                  <div className="text-center text-white font-extrabold text-5xl mb-4 leading-tight">
+                    <span className="block animate-pulse">Comienza a hablar con</span>
+                    <span className="text-green-400 text-6xl">EcoIA</span>
+                  </div>
                 </div>
-              </div>
-              <div className="chat-header text-white">
-                {message.role === 'user' ? 'Tú' : 'EcoIA'}
-              </div>
-              <div className={`chat-bubble backdrop-blur ${message.role === 'user' ? 'bg-green-950/50 text-white' : 'bg-green-500/50 text-white'}`}>
-                {message.content}
-              </div>
+              )}
 
-              {message.role !== 'user' && (
-                <Speech
-                  text={message.content.replace(/\*/g, '')}
-                  lang="es-ES"
-                  onStart={() => setIsSpeaking(true)}
-                  onStop={() => setIsSpeaking(false)}
-                  startBtn={
-                    <button
-                      ref={playButtonRef}
-                      className="absolute top-0 right-0 p-2 text-white bg-green-500 hover:bg-green-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
-                    >
-                      Reproducir
-                    </button>
-                  }
-                />
+              {conversation.map((message, index) => (
+                <div key={index} className={`chat ${message.role === 'user' ? 'chat-end' : 'chat-start'}`}>
+                  <div className="chat-image avatar">
+                    <div className="w-10 rounded-full">
+                      <img
+                        alt="Chat Avatar"
+                        src={message.role === 'user' ? 'https://img.icons8.com/fluency/96/user-male-circle--v1.png' : '/ecologIAnoBg.webp'}
+                      />
+                    </div>
+                  </div>
+                  <div className="chat-header text-white">
+                    {message.role === 'user' ? 'Tú' : 'EcoIA'}
+                  </div>
+                  <div className={`chat-bubble backdrop-blur ${message.role === 'user' ? 'bg-green-950/50 text-white' : 'bg-green-500/50 text-white'}`}>
+                    {message.content}
+                  </div>
+
+                  {message.role !== 'user' && (
+                    <Speech
+                      text={message.content.replace(/\*/g, '')}
+                      lang="es-ES"
+                      onStart={() => setIsSpeaking(true)}
+                      onStop={() => setIsSpeaking(false)}
+                      startBtn={
+                        <button
+                          ref={playButtonRef}
+                          className="absolute top-0 right-0 p-2 text-white bg-green-500 hover:bg-green-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
+                        >
+                          Reproducir
+                        </button>
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <textarea
+              rows={1}
+              cols={50}
+              value={input}
+              onChange={event => setInput(event.target.value)}
+              className="w-full p-2 border rounded-lg disabled:opacity-50"
+              placeholder="Esperando tu mensaje..."
+              disabled={!isListening}
+            >
+
+            </textarea>
+
+            <div className="flex space-x-4 items-center justify-center">
+              {!isListening ? (
+                <button
+                  onClick={startListening}
+                  className="relative px-6 py-6 rounded-full text-white bg-green-500 hover:bg-green-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
+                >
+                  <FaMicrophone className="w-8 h-8" />
+                </button>
+              ) : (
+                <button
+                  onClick={stopSpeech}
+                  className="relative px-6 py-6 rounded-full text-white bg-red-500 hover:bg-red-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
+                >
+                  <FaMicrophoneAltSlash className="w-8 h-8" />
+                </button>
               )}
             </div>
-          ))}
-        </div>
-
-        <textarea
-          rows={1}
-          cols={50}
-          value={input}
-          onChange={event => setInput(event.target.value)}
-          className="w-full p-2 border rounded-lg disabled:opacity-50"
-          placeholder="Esperando tu mensaje..."
-          disabled={!isListening}
-        >
-
-        </textarea>
-
-        <div className="flex space-x-4 items-center justify-center">
-          {!isListening ? (
-            <button
-              onClick={startListening}
-              className="relative px-6 py-6 rounded-full text-white bg-green-500 hover:bg-green-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
-            >
-              <FaMicrophone className="w-8 h-8" />
-            </button>
-          ) : (
-            <button
-              onClick={stopSpeech}
-              className="relative px-6 py-6 rounded-full text-white bg-red-500 hover:bg-red-600 focus:outline-none shadow-lg transition-transform transform hover:scale-105 active:scale-95"
-            >
-              <FaMicrophoneAltSlash className="w-8 h-8" />
-            </button>
-          )}
+          </div>
         </div>
       </div>
+      <div className="drawer-side">
+        <label htmlFor="my-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+        <ul className="menu bg-base-200 text-base-content min-h-full w-80 p-4">
+          {/* Sidebar content here */}
+          <li>
+            <a>
+              <FaHome className="mr-2" /> Iniciemos
+            </a>
+          </li>
+          <li>
+            <a>
+              <FaUser className="mr-2" /> ¿Quién Soy?
+            </a>
+          </li>
+          <li>
+            <a>
+              <FaClipboardList className="mr-2" /> Nuestra Consultoria
+            </a>
+          </li>
+          <li>
+            <a>
+              <FaRegCalendarAlt className="mr-2" /> Planes
+            </a>
+          </li>
+          <li>
+            <a>
+              <FaEnvelope className="mr-2" /> Contacto
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
+
+
+
+
+
+
   );
 }
